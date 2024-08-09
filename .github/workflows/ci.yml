@@ -23,16 +23,27 @@ jobs:
         with:
           go-version: ${{ matrix.go-version }}
 
+      - name: Set GOOS
+        id: set-goos
+        run: |
+          if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
+            echo "GOOS=linux" >> $GITHUB_ENV
+            echo "OS_NAME=ubuntu" >> $GITHUB_ENV
+          elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+            echo "GOOS=darwin" >> $GITHUB_ENV
+            echo "OS_NAME=macos" >> $GITHUB_ENV
+          fi
+
       - name: Build Binary
         run: |
           mkdir -p dist
-          GOOS=$(echo ${{ matrix.os }} | sed 's/-latest//') GOARCH=amd64 go build -o dist/myapp-${{ matrix.os }}-amd64
+          GOARCH=amd64 go build -o dist/myapp-${{ env.OS_NAME }}-amd64
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v2
         with:
-          name: myapp-${{ matrix.os }}-amd64
-          path: dist/myapp-${{ matrix.os }}-amd64
+          name: myapp-${{ env.OS_NAME }}-amd64
+          path: dist/myapp-${{ env.OS_NAME }}-amd64
 
   release:
     needs: build
