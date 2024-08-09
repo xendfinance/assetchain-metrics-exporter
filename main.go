@@ -17,7 +17,7 @@ import (
 var (
 	ipcPath          string
 	debug            bool
-	port             int
+	port             string
 	blockNumberGauge = prometheus.NewGauge(
 		prometheus.GaugeOpts{
 			Name: "assetchain_block_number",
@@ -70,7 +70,7 @@ func main() {
 	// Define flags for the config path and debug mode.
 	flag.StringVar(&ipcPath, "config.ipcpath", "/home/ubuntu/opera.ipc", "Path to the opera.ipc file")
 	flag.BoolVar(&debug, "config.debug", false, "Enable debug mode")
-	flag.IntVar(&port, "config.port", 8080, "Port for metrics")
+	flag.StringVar(&port, "config.port", "8080", "Port for metrics")
 	flag.Parse()
 
 	if debug {
@@ -88,6 +88,6 @@ func main() {
 
 	// Expose the registered metrics via HTTP.
 	http.Handle("/metrics", promhttp.Handler())
-	log.Fatal(http.ListenAndServe(fmt.Sprintf("%d", port), nil))
-	log.Printf("Listening on port %d", port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
+	log.Printf("Listening on port %s", port)
 }
