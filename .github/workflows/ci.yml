@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
-        go-version: [1.22.x]
+        go-version: [1.22.x]  # Specify Go 1.22.x version
 
     steps:
       - name: Checkout code
@@ -37,33 +37,59 @@ jobs:
       - name: Build Binary
         run: |
           mkdir -p dist
-          GOARCH=amd64 go build -o dist/myapp-${{ env.OS_NAME }}-amd64
+          GOARCH=amd64 go build -o dist/assetchain-metrics-explorer-${{ env.OS_NAME }}-amd64
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v2
         with:
-          name: myapp-${{ env.OS_NAME }}-amd64
-          path: dist/myapp-${{ env.OS_NAME }}-amd64
+          name: assetchain-metrics-explorer-${{ env.OS_NAME }}-amd64
+          path: dist/assetchain-metrics-explorer-${{ env.OS_NAME }}-amd64
 
   release:
     needs: build
     runs-on: ubuntu-latest
     if: github.ref_type == 'tag'
     steps:
-      - name: Download Artifacts
+      - name: Download Ubuntu Artifact
         uses: actions/download-artifact@v2
         with:
+          name: assetchain-metrics-explorer-ubuntu-amd64
+          path: ./dist
+
+      - name: Download macOS Artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: assetchain-metrics-explorer-macos-amd64
           path: ./dist
 
       - name: Create GitHub Release
+        id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         with:
           tag_name: ${{ github.ref_name }}
           release_name: Release ${{ github.ref_name }}
-          body: |
-            Release version ${{ github.ref_name }}.
+          body: "Release version ${{ github.ref_name }}"
           draft: false
           prerelease: false
-          files: ./dist/*
+
+      - name: Upload Release Asset (Ubuntu)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/assetchain-metrics-explorer-ubuntu-amd64
+          asset_name: assetchain-metrics-explorer-ubuntu-amd64
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Asset (macOS)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/assetchain-metrics-explorer-macos-amd64
+          asset_name: assetchain-metrics-explorer-macos-amd64
+          asset_content_type: application/octet-stream
